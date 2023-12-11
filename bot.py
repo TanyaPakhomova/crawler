@@ -1,4 +1,5 @@
 from aiogram.utils.markdown import hlink
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 import json
 from aiogram import F
 from aiogram.filters import Command
@@ -45,7 +46,18 @@ async def min_price_handler(message: types.Message):
 
    pps = find_cheapest(argument)
    for p in pps:
-      await message.answer(p.display())
+      print(p.display())
+
+      builder = InlineKeyboardBuilder()
+      builder.add(types.InlineKeyboardButton(text="😍 в избранное", 
+         callback_data="favorites_" + p.brand + ' ' + p.name))
+
+      await message.answer(p.display(), reply_markup=builder.as_markup(), parse_mode=ParseMode.HTML)
+
+@dp.callback_query(F.data.startswith("favorites_"))
+async def send_random_value(callback: types.CallbackQuery):
+    product_name = callback.data.split("_")[1]
+    await callback.message.answer("Добавил " + product_name + " в избранное")
 
 class Product:
     def __init__(self, name, brand, url, price): 
@@ -55,7 +67,7 @@ class Product:
         self.price = price
 
     def display(self):
-        return self.brand + '\n' + self.name + '\n' + str(self.price) + '\n\n----------\n' + str(self.url) 
+        return '<b>' + self.brand + '</b>' + '\n' + self.name + '\n\n' + '<b>' + str(self.price) + ' RUB'+ '</b>' + '\n\n' + str(self.url) 
 
 def find_cheapest(cnt): 
     pps = []
